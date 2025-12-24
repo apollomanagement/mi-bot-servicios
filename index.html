@@ -9,53 +9,78 @@
             --bg-color: #0f0f0f;
             --card-bg: #1a1a1a;
             --text-color: #ffffff;
-            --hint-color: #aaaaaa;
             --button-color: #248bcf;
-            --danger-color: #eb4034;
+            --hint-color: #aaaaaa;
         }
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: sans-serif;
-            margin: 0; padding: 15px; padding-bottom: 100px;
+            margin: 0; padding: 15px;
         }
+        .screen { display: none; }
+        .active { display: block; }
+
         .card {
             background: var(--card-bg);
-            border-radius: 15px;
+            border-radius: 12px;
             padding: 15px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 1px solid #333;
         }
-        .info h3 { margin: 0; font-size: 16px; }
-        .price { color: var(--button-color); font-weight: bold; }
+        .btn-pay {
+            background: var(--card-bg);
+            border: 2px solid #333;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            width: 100%;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-pay:active { border-color: var(--button-color); background: #222; }
+        .crypto-icon { width: 24px; height: 24px; }
         
+        /* Estilos del contador */
         .controls { display: flex; align-items: center; gap: 10px; }
-        .btn-circle {
-            width: 30px; height: 30px; border-radius: 50%; border: none;
-            font-weight: bold; cursor: pointer; display: flex;
-            align-items: center; justify-content: center;
-        }
-        .btn-minus { background: #333; color: white; }
-        .btn-plus { background: var(--button-color); color: white; }
-        .count { font-weight: bold; min-width: 20px; text-align: center; }
-        
-        #cart-summary {
-            background: #111; padding: 10px; border-radius: 10px;
-            margin-top: 20px; font-size: 14px; color: var(--hint-color);
-        }
+        .btn-circle { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--button-color); color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h2 style="text-align: center;">Mis Servicios</h2>
+    <div id="screen-catalog" class="screen active">
+        <h2 style="text-align: center;">Mis Servicios</h2>
+        <div id="catalog-list"></div>
+    </div>
 
-    <div id="catalog">
-        </div>
+    <div id="screen-payment" class="screen">
+        <h2 style="text-align: center;">Selecciona Moneda</h2>
+        
+        <button class="btn-pay" onclick="finalizarPago('usdc')">
+            <img class="crypto-icon" src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"> USDC
+        </button>
+        <button class="btn-pay" onclick="finalizarPago('usdt')">
+            <img class="crypto-icon" src="https://cryptologos.cc/logos/tether-usdt-logo.png"> USDT
+        </button>
+        <button class="btn-pay" onclick="finalizarPago('eth')">
+            <img class="crypto-icon" src="https://cryptologos.cc/logos/ethereum-eth-logo.png"> ETH
+        </button>
+        <button class="btn-pay" onclick="finalizarPago('btc')">
+            <img class="crypto-icon" src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"> BTC
+        </button>
+        <button class="btn-pay" onclick="finalizarPago('sol')">
+            <img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana
+        </button>
 
-    <div id="cart-summary">Carrito vacío</div>
+        <p style="text-align: center; color: var(--hint-color);" onclick="irACatalogo()">← Volver al catálogo</p>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -68,75 +93,64 @@
             { id: 4, nombre: "Servicio 4", precio: 40 }
         ];
 
-        let carrito = {}; // Estructura: { id_servicio: cantidad }
+        let carrito = {};
 
         function renderCatalog() {
-            const container = document.getElementById('catalog');
+            const container = document.getElementById('catalog-list');
             container.innerHTML = servicios.map(s => `
                 <div class="card">
-                    <div class="info">
-                        <h3>${s.nombre}</h3>
-                        <span class="price">$${s.precio}</span>
-                    </div>
+                    <div><b>${s.nombre}</b><br><small>$${s.precio}</small></div>
                     <div class="controls">
-                        <button class="btn-circle btn-minus" onclick="cambiarCantidad(${s.id}, -1)">-</button>
-                        <span class="count" id="count-${s.id}">${carrito[s.id] || 0}</span>
-                        <button class="btn-circle btn-plus" onclick="cambiarCantidad(${s.id}, 1)">+</button>
+                        <button class="btn-circle" onclick="cambiarCantidad(${s.id}, -1)">-</button>
+                        <span>${carrito[s.id] || 0}</span>
+                        <button class="btn-circle" onclick="cambiarCantidad(${s.id}, 1)">+</button>
                     </div>
                 </div>
             `).join('');
         }
 
         function cambiarCantidad(id, delta) {
-            if (!carrito[id]) carrito[id] = 0;
-            carrito[id] += delta;
-
+            carrito[id] = (carrito[id] || 0) + delta;
             if (carrito[id] <= 0) delete carrito[id];
             
-            tg.HapticFeedback.selectionChanged();
-            actualizarInterfaz();
-        }
-
-        function actualizarInterfaz() {
             let total = 0;
-            let itemsCount = 0;
-            let summaryText = "Resumen: ";
-
-            servicios.forEach(s => {
-                const cant = carrito[s.id] || 0;
-                document.getElementById(`count-${s.id}`).innerText = cant;
-                if (cant > 0) {
-                    total += s.precio * cant;
-                    itemsCount += cant;
-                    summaryText += `${cant}x ${s.nombre}, `;
-                }
+            Object.keys(carrito).forEach(key => {
+                const s = servicios.find(srv => srv.id == key);
+                total += s.precio * carrito[key];
             });
 
-            const summaryDiv = document.getElementById('cart-summary');
-            if (itemsCount > 0) {
-                summaryDiv.innerText = summaryText.slice(0, -2);
-                tg.MainButton.setText(`PAGAR TOTAL: $${total.toFixed(2)}`);
+            if (total > 0) {
+                tg.MainButton.setText(`CONTINUAR ($${total.toFixed(2)})`);
                 tg.MainButton.show();
             } else {
-                summaryDiv.innerText = "Carrito vacío";
                 tg.MainButton.hide();
             }
-
-            renderCatalog(); // Refresca para mantener sincronía
+            renderCatalog();
         }
 
+        // Al dar clic en CONTINUAR
         tg.onEvent('mainButtonClicked', () => {
+            document.getElementById('screen-catalog').classList.remove('active');
+            document.getElementById('screen-payment').classList.add('active');
+            tg.MainButton.hide(); // Ocultamos el botón para que elija moneda
+            tg.BackButton.show(); // Mostramos botón de volver de Telegram
+        });
+
+        tg.onEvent('backButtonClicked', () => irACatalogo());
+
+        function irACatalogo() {
+            document.getElementById('screen-payment').classList.remove('active');
+            document.getElementById('screen-catalog').classList.add('active');
+            tg.BackButton.hide();
+            tg.MainButton.show();
+        }
+
+        function finalizarPago(moneda) {
             tg.MainButton.showProgress();
             
-            // Calculamos el total final antes de enviar
-            let montoFinal = 0;
-            const listaFinal = [];
-            
-            servicios.forEach(s => {
-                if(carrito[s.id]) {
-                    montoFinal += s.precio * carrito[s.id];
-                    listaFinal.push({ nombre: s.nombre, cantidad: carrito[s.id] });
-                }
+            let totalMonto = 0;
+            Object.keys(carrito).forEach(id => {
+                totalMonto += servicios.find(s => s.id == id).precio * carrito[id];
             });
 
             fetch('https://n8n.srv1211656.hstgr.cloud/webhook/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
@@ -144,8 +158,8 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     user: tg.initDataUnsafe.user,
-                    pedido: listaFinal,
-                    total: montoFinal
+                    total: totalMonto,
+                    currency: moneda // Enviamos la moneda elegida
                 })
             })
             .then(res => res.json())
@@ -153,7 +167,7 @@
                 tg.MainButton.hideProgress();
                 if(data.payment_url) tg.openLink(data.payment_url);
             });
-        });
+        }
 
         renderCatalog();
     </script>
