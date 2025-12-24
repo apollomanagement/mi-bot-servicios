@@ -16,70 +16,79 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: sans-serif;
-            margin: 0; padding: 15px;
+            margin: 0; padding: 15px; padding-bottom: 50px;
         }
         .screen { display: none; }
         .active { display: block; }
-
+        h2 { text-align: center; color: var(--button-color); }
+        
         .card {
             background: var(--card-bg);
             border-radius: 12px;
             padding: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 1px solid #333;
         }
+        .info h3 { margin: 0; font-size: 16px; }
+        .price { color: var(--button-color); font-weight: bold; }
+        
         .btn-pay {
             background: var(--card-bg);
             border: 2px solid #333;
             color: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 12px;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             gap: 15px;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
+            transition: 0.2s;
         }
         .btn-pay:active { border-color: var(--button-color); background: #222; }
-        .crypto-icon { width: 24px; height: 24px; }
+        .crypto-icon { width: 22px; height: 22px; border-radius: 50%; }
         
-        /* Estilos del contador */
         .controls { display: flex; align-items: center; gap: 10px; }
-        .btn-circle { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--button-color); color: white; cursor: pointer; }
+        .btn-circle { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--button-color); color: white; cursor: pointer; font-weight: bold; }
+        
+        #resumen-final hr { border: 0; border-top: 1px solid #333; margin: 10px 0; }
+        .grid-pay { display: grid; grid-template-columns: 1fr; gap: 5px; }
     </style>
 </head>
 <body>
 
     <div id="screen-catalog" class="screen active">
-        <h2 style="text-align: center;">Mis Servicios</h2>
+        <h2>Nuestros Servicios</h2>
         <div id="catalog-list"></div>
     </div>
 
     <div id="screen-payment" class="screen">
-        <h2 style="text-align: center;">Selecciona Moneda</h2>
-        
-        <button class="btn-pay" onclick="finalizarPago('usdc')">
-            <img class="crypto-icon" src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"> USDC
-        </button>
-        <button class="btn-pay" onclick="finalizarPago('usdt')">
-            <img class="crypto-icon" src="https://cryptologos.cc/logos/tether-usdt-logo.png"> USDT
-        </button>
-        <button class="btn-pay" onclick="finalizarPago('eth')">
-            <img class="crypto-icon" src="https://cryptologos.cc/logos/ethereum-eth-logo.png"> ETH
-        </button>
-        <button class="btn-pay" onclick="finalizarPago('btc')">
-            <img class="crypto-icon" src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"> BTC
-        </button>
-        <button class="btn-pay" onclick="finalizarPago('sol')">
-            <img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana
-        </button>
+        <h2>Selecciona Moneda</h2>
+        <div class="grid-pay">
+            <button class="btn-pay" onclick="elegirMoneda('usdc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"> USDC</button>
+            <button class="btn-pay" onclick="elegirMoneda('eth')"><img class="crypto-icon" src="https://cryptologos.cc/logos/ethereum-eth-logo.png"> Ethereum (ETH)</button>
+            <button class="btn-pay" onclick="elegirMoneda('btc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"> Bitcoin (BTC)</button>
+            <button class="btn-pay" onclick="elegirMoneda('sol')"><img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana (SOL)</button>
+            <button class="btn-pay" onclick="elegirMoneda('ltc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/litecoin-ltc-logo.png"> Litecoin (LTC)</button>
+            <button class="btn-pay" onclick="elegirMoneda('trx')"><img class="crypto-icon" src="https://cryptologos.cc/logos/tron-trx-logo.png"> TRON (TRX)</button>
+            <button class="btn-pay" onclick="elegirMoneda('bnb')"><img class="crypto-icon" src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png"> BNB (BSC)</button>
+            <button class="btn-pay" onclick="elegirMoneda('ton')"><img class="crypto-icon" src="https://ton.org/download/ton_symbol.png"> TON (Toncoin)</button>
+        </div>
+        <p style="text-align: center; color: var(--hint-color); cursor: pointer; margin-top: 20px;" onclick="irACatalogo()">← Volver al catálogo</p>
+    </div>
 
-        <p style="text-align: center; color: var(--hint-color);" onclick="irACatalogo()">← Volver al catálogo</p>
+    <div id="screen-confirm" class="screen">
+        <h2>Confirmar Pedido</h2>
+        <div class="card" id="resumen-final" style="display: block; text-align: left;"></div>
+        <button class="btn-pay" style="background: var(--button-color); justify-content: center; border:none; margin-top: 10px;" onclick="procesarPedidoFinal()">
+            CONFIRMAR Y RECIBIR DIRECCIÓN
+        </button>
+        <p style="text-align: center; color: var(--hint-color); cursor: pointer;" onclick="irAPayments()">← Cambiar moneda</p>
     </div>
 
     <script>
@@ -94,12 +103,16 @@
         ];
 
         let carrito = {};
+        let monedaSeleccionada = '';
 
         function renderCatalog() {
             const container = document.getElementById('catalog-list');
             container.innerHTML = servicios.map(s => `
                 <div class="card">
-                    <div><b>${s.nombre}</b><br><small>$${s.precio}</small></div>
+                    <div class="info">
+                        <h3>${s.nombre}</h3>
+                        <span class="price">$${s.precio}</span>
+                    </div>
                     <div class="controls">
                         <button class="btn-circle" onclick="cambiarCantidad(${s.id}, -1)">-</button>
                         <span>${carrito[s.id] || 0}</span>
@@ -115,8 +128,7 @@
             
             let total = 0;
             Object.keys(carrito).forEach(key => {
-                const s = servicios.find(srv => srv.id == key);
-                total += s.precio * carrito[key];
+                total += servicios.find(s => s.id == key).precio * carrito[key];
             });
 
             if (total > 0) {
@@ -125,70 +137,84 @@
             } else {
                 tg.MainButton.hide();
             }
+            tg.HapticFeedback.selectionChanged();
             renderCatalog();
         }
 
-        // Al dar clic en CONTINUAR
         tg.onEvent('mainButtonClicked', () => {
             document.getElementById('screen-catalog').classList.remove('active');
             document.getElementById('screen-payment').classList.add('active');
-            tg.MainButton.hide(); // Ocultamos el botón para que elija moneda
-            tg.BackButton.show(); // Mostramos botón de volver de Telegram
+            tg.MainButton.hide();
+            tg.BackButton.show();
         });
 
         tg.onEvent('backButtonClicked', () => irACatalogo());
 
         function irACatalogo() {
             document.getElementById('screen-payment').classList.remove('active');
+            document.getElementById('screen-confirm').classList.remove('active');
             document.getElementById('screen-catalog').classList.add('active');
             tg.BackButton.hide();
             tg.MainButton.show();
         }
 
-        function finalizarPago(moneda) {
-    tg.MainButton.showProgress();
-    
-    let totalMonto = 0;
-    let serviciosSeleccionados = []; // 1. Inicializamos la lista vacía
+        function elegirMoneda(moneda) {
+            monedaSeleccionada = moneda;
+            document.getElementById('screen-payment').classList.remove('active');
+            document.getElementById('screen-confirm').classList.add('active');
+            
+            let detalle = "";
+            let totalFinal = 0;
+            Object.keys(carrito).forEach(id => {
+                const s = servicios.find(srv => srv.id == id);
+                detalle += `• ${carrito[id]}x ${s.nombre}<br>`;
+                totalFinal += s.precio * carrito[id];
+            });
 
-    // 2. Llenamos la lista RECORRIENDO el carrito actual
-    Object.keys(carrito).forEach(id => {
-        const srv = servicios.find(s => s.id == parseInt(id));
-        if (srv) {
-            const cantidad = carrito[id];
-            totalMonto += srv.precio * cantidad;
-            // Guardamos el texto: ej. "2x Servicio 1"
-            serviciosSeleccionados.push(`${cantidad}x ${srv.nombre}`); 
+            document.getElementById('resumen-final').innerHTML = `
+                <strong>Servicios:</strong><br>${detalle}
+                <hr>
+                <strong>Total a pagar:</strong> $${totalFinal.toFixed(2)}<br>
+                <strong>Moneda elegida:</strong> ${moneda.toUpperCase()}
+            `;
         }
-    });
 
-    // 3. Enviamos a n8n
-    fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            user: tg.initDataUnsafe.user,
-            total: totalMonto,
-            currency: moneda,
-            servicios_nombres: serviciosSeleccionados.join(', ') // 4. Aquí se unen los nombres
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        tg.MainButton.hideProgress();
-        if(data.payment_url) tg.openLink(data.payment_url);
-    })
-    .catch(err => {
-        tg.MainButton.hideProgress();
-        tg.showAlert("Error al conectar con el servidor");
-    });
-}
+        function irAPayments() {
+            document.getElementById('screen-confirm').classList.remove('active');
+            document.getElementById('screen-payment').classList.add('active');
+        }
+
+        function procesarPedidoFinal() {
+            tg.MainButton.showProgress();
+            let serviciosSeleccionados = [];
+            let totalMonto = 0;
+            
+            Object.keys(carrito).forEach(id => {
+                const srv = servicios.find(s => s.id == parseInt(id));
+                totalMonto += srv.precio * carrito[id];
+                serviciosSeleccionados.push(`${carrito[id]}x ${srv.nombre}`);
+            });
+
+            fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    user: tg.initDataUnsafe.user,
+                    total: totalMonto,
+                    currency: monedaSeleccionada,
+                    servicios_nombres: serviciosSeleccionados.join(', ')
+                })
+            }).then(() => {
+                tg.MainButton.hideProgress();
+                tg.showAlert("✅ ¡Pedido confirmado! Revisa tu chat, te hemos enviado la dirección de pago.");
+                setTimeout(() => tg.close(), 2000);
+            }).catch(() => {
+                tg.MainButton.hideProgress();
+                tg.showAlert("Error al procesar el pedido.");
+            });
+        }
 
         renderCatalog();
     </script>
 </body>
 </html>
-
-
-
-
