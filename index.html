@@ -15,12 +15,14 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: sans-serif;
-            margin: 0; padding: 15px; padding-bottom: 50px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 15px; padding-bottom: 80px;
+            user-select: none; /* Evita selecciones accidentales al cliquear rápido */
         }
         .screen { display: none; }
         .active { display: block; }
-        h2 { text-align: center; color: var(--button-color); }
+        h2 { text-align: center; color: var(--button-color); margin-top: 10px; }
+        
         .card {
             background: var(--card-bg);
             border-radius: 12px;
@@ -33,6 +35,7 @@
         }
         .info h3 { margin: 0; font-size: 16px; }
         .price { color: var(--button-color); font-weight: bold; }
+        
         .btn-pay {
             background: var(--card-bg);
             border: 2px solid #333;
@@ -47,38 +50,44 @@
             font-size: 15px;
             cursor: pointer;
         }
-        .btn-pay:active { border-color: var(--button-color); }
-        .crypto-icon { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; }
-        .controls { display: flex; align-items: center; gap: 10px; }
-        .btn-circle { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--button-color); color: white; cursor: pointer; font-weight: bold; }
+        .btn-pay:active { background: #222; border-color: var(--button-color); }
+        .crypto-icon { width: 24px; height: 24px; border-radius: 50%; }
+        
+        .controls { display: flex; align-items: center; gap: 12px; }
+        .btn-circle { 
+            width: 34px; height: 34px; border-radius: 50%; border: none; 
+            background: var(--button-color); color: white; 
+            cursor: pointer; font-weight: bold; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .count-text { font-weight: bold; min-width: 15px; text-align: center; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div id="screen-catalog" class="screen active">
-        <h2>Nuestros Servicios</h2>
-        <div id="catalog-list"></div>
+        <h2>Servicios</h2>
+        <div id="catalog-list">
+            </div>
     </div>
 
     <div id="screen-payment" class="screen">
-        <h2>Selecciona Moneda</h2>
-        <div class="grid-pay">
-            <button class="btn-pay" onclick="elegirMoneda('usdc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"> USDC</button>
-            <button class="btn-pay" onclick="elegirMoneda('eth')"><img class="crypto-icon" src="https://cryptologos.cc/logos/ethereum-eth-logo.png"> Ethereum (ETH)</button>
-            <button class="btn-pay" onclick="elegirMoneda('btc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"> Bitcoin (BTC)</button>
-            <button class="btn-pay" onclick="elegirMoneda('sol')"><img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana (SOL)</button>
-            <button class="btn-pay" onclick="elegirMoneda('ltc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/litecoin-ltc-logo.png"> Litecoin (LTC)</button>
-            <button class="btn-pay" onclick="elegirMoneda('trx')"><img class="crypto-icon" src="https://cryptologos.cc/logos/tron-trx-logo.png"> TRON (TRX)</button>
-            <button class="btn-pay" onclick="elegirMoneda('ton')"><img class="crypto-icon" src="https://cryptologos.cc/logos/toncoin-ton-logo.png"> TON (Toncoin)</button>
-        </div>
-        <p style="text-align: center; color: var(--hint-color); cursor: pointer;" onclick="irACatalogo()">← Volver</p>
+        <h2>Pagar con</h2>
+        <button class="btn-pay" onclick="elegirMoneda('usdc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"> USDC</button>
+        <button class="btn-pay" onclick="elegirMoneda('eth')"><img class="crypto-icon" src="https://cryptologos.cc/logos/ethereum-eth-logo.png"> Ethereum (ETH)</button>
+        <button class="btn-pay" onclick="elegirMoneda('btc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"> Bitcoin (BTC)</button>
+        <button class="btn-pay" onclick="elegirMoneda('sol')"><img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana (SOL)</button>
+        <button class="btn-pay" onclick="elegirMoneda('ltc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/litecoin-ltc-logo.png"> Litecoin (LTC)</button>
+        <button class="btn-pay" onclick="elegirMoneda('trx')"><img class="crypto-icon" src="https://cryptologos.cc/logos/tron-trx-logo.png"> TRON (TRX)</button>
+        <button class="btn-pay" onclick="elegirMoneda('ton')"><img class="crypto-icon" src="https://cryptologos.cc/logos/toncoin-ton-logo.png"> TON</button>
+        <p style="text-align: center; color: var(--hint-color); cursor: pointer; margin-top:20px;" onclick="navegar('screen-catalog')">← Volver</p>
     </div>
 
     <div id="screen-confirm" class="screen">
         <h2>Confirmar</h2>
         <div class="card" id="resumen-final" style="display: block;"></div>
-        <button class="btn-pay" style="background: var(--button-color); justify-content: center; border:none;" onclick="procesarPedidoFinal()">CONFIRMAR</button>
-        <p style="text-align: center; color: var(--hint-color); cursor: pointer;" onclick="irAPayments()">← Cambiar moneda</p>
+        <button class="btn-pay" style="background: var(--button-color); justify-content: center; border:none;" onclick="procesarPedidoFinal()">CONFIRMAR PEDIDO</button>
+        <p style="text-align: center; color: var(--hint-color); cursor: pointer;" onclick="navegar('screen-payment')">← Cambiar moneda</p>
     </div>
 
     <script>
@@ -92,33 +101,40 @@
             { id: 4, nombre: "Servicio 4", precio: 40 }
         ];
 
-        let carrito = {};
+        let carrito = { 1:0, 2:0, 3:0, 4:0 }; // Estado inicial limpio
         let monedaSeleccionada = '';
 
-        function renderCatalog() {
+        // Carga inicial del catálogo (solo una vez para evitar errores de render)
+        function initCatalog() {
             const container = document.getElementById('catalog-list');
             container.innerHTML = servicios.map(s => `
                 <div class="card">
                     <div class="info"><h3>${s.nombre}</h3><span class="price">$${s.precio}</span></div>
                     <div class="controls">
-                        <button class="btn-circle" onclick="cambiarCantidad(${s.id}, -1)">-</button>
-                        <span id="qty-${s.id}">${carrito[s.id] || 0}</span>
-                        <button class="btn-circle" onclick="cambiarCantidad(${s.id}, 1)">+</button>
+                        <button class="btn-circle" onclick="updateQty(${s.id}, -1)">-</button>
+                        <span class="count-text" id="qty-${s.id}">0</span>
+                        <button class="btn-circle" onclick="updateQty(${s.id}, 1)">+</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function cambiarCantidad(id, delta) {
-            carrito[id] = (carrito[id] || 0) + delta;
-            if (carrito[id] <= 0) delete carrito[id];
+        function updateQty(id, change) {
+            let newVal = carrito[id] + change;
+            if (newVal < 0) newVal = 0;
+            carrito[id] = newVal;
             
-            // Actualizar número visualmente sin re-renderizar todo
-            document.getElementById(`qty-${id}`).innerText = carrito[id] || 0;
+            // Actualizar solo el número en pantalla
+            document.getElementById(`qty-${id}`).innerText = newVal;
+            
+            recalcularTotal();
+            tg.HapticFeedback.impactOccurred('light');
+        }
 
+        function recalcularTotal() {
             let total = 0;
-            Object.keys(carrito).forEach(key => {
-                total += servicios.find(s => s.id == key).precio * carrito[key];
+            servicios.forEach(s => {
+                total += s.precio * carrito[s.id];
             });
 
             if (total > 0) {
@@ -127,41 +143,38 @@
             } else {
                 tg.MainButton.hide();
             }
-            tg.HapticFeedback.selectionChanged();
         }
 
-        tg.onEvent('mainButtonClicked', () => {
-            document.getElementById('screen-catalog').classList.remove('active');
-            document.getElementById('screen-payment').classList.add('active');
-            tg.MainButton.hide();
-            tg.BackButton.show();
-        });
-
-        tg.onEvent('backButtonClicked', () => irACatalogo());
-
-        function irACatalogo() {
-            document.getElementById('screen-payment').classList.remove('active');
-            document.getElementById('screen-confirm').classList.remove('active');
-            document.getElementById('screen-catalog').classList.add('active');
-            tg.BackButton.hide();
+        function navegar(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
             
-            // Re-evaluar si mostrar botón principal
-            let total = 0;
-            Object.keys(carrito).forEach(key => total += servicios.find(s => s.id == key).precio * carrito[key]);
-            if(total > 0) tg.MainButton.show();
+            if(screenId === 'screen-catalog') {
+                tg.BackButton.hide();
+                recalcularTotal(); // Asegura que el botón se muestre si hay algo
+            } else {
+                tg.BackButton.show();
+                tg.MainButton.hide();
+            }
         }
+
+        tg.onEvent('mainButtonClicked', () => navegar('screen-payment'));
+        tg.onEvent('backButtonClicked', () => {
+            const current = document.querySelector('.screen.active').id;
+            if(current === 'screen-confirm') navegar('screen-payment');
+            else navegar('screen-catalog');
+        });
 
         function elegirMoneda(moneda) {
             monedaSeleccionada = moneda;
-            document.getElementById('screen-payment').classList.remove('active');
-            document.getElementById('screen-confirm').classList.add('active');
-            
             let detalle = "";
             let totalFinal = 0;
-            Object.keys(carrito).forEach(id => {
-                const s = servicios.find(srv => srv.id == id);
-                detalle += `• ${carrito[id]}x ${s.nombre}<br>`;
-                totalFinal += s.precio * carrito[id];
+            
+            servicios.forEach(s => {
+                if(carrito[s.id] > 0) {
+                    detalle += `• ${carrito[s.id]}x ${s.nombre}<br>`;
+                    totalFinal += s.precio * carrito[s.id];
+                }
             });
 
             document.getElementById('resumen-final').innerHTML = `
@@ -169,22 +182,19 @@
                 <strong>Total:</strong> $${totalFinal.toFixed(2)}<br>
                 <strong>Pago en:</strong> ${moneda.toUpperCase()}
             `;
-        }
-
-        function irAPayments() {
-            document.getElementById('screen-confirm').classList.remove('active');
-            document.getElementById('screen-payment').classList.add('active');
+            navegar('screen-confirm');
         }
 
         function procesarPedidoFinal() {
             tg.MainButton.showProgress();
-            let serviciosSeleccionados = [];
+            let lista = [];
             let totalMonto = 0;
             
-            Object.keys(carrito).forEach(id => {
-                const srv = servicios.find(s => s.id == parseInt(id));
-                totalMonto += srv.precio * carrito[id];
-                serviciosSeleccionados.push(`${carrito[id]}x ${srv.nombre}`);
+            servicios.forEach(s => {
+                if(carrito[s.id] > 0) {
+                    totalMonto += s.precio * carrito[s.id];
+                    lista.push(`${carrito[s.id]}x ${s.nombre}`);
+                }
             });
 
             fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
@@ -194,19 +204,19 @@
                     user: tg.initDataUnsafe.user,
                     total: totalMonto,
                     currency: monedaSeleccionada,
-                    servicios_nombres: serviciosSeleccionados.join(', ')
+                    servicios_nombres: lista.join(', ')
                 })
             }).then(() => {
                 tg.MainButton.hideProgress();
-                tg.showAlert("✅ ¡Confirmado! Revisa el chat para la dirección.");
+                tg.showAlert("✅ ¡Confirmado! Revisa el chat para pagar.");
                 setTimeout(() => tg.close(), 2000);
             }).catch(() => {
                 tg.MainButton.hideProgress();
-                tg.showAlert("Error.");
+                tg.showAlert("Error de conexión.");
             });
         }
 
-        renderCatalog();
+        initCatalog();
     </script>
 </body>
 </html>
