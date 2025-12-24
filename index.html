@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -15,9 +15,14 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0; padding: 15px; padding-bottom: 80px;
-            user-select: none; /* Evita selecciones accidentales al cliquear rápido */
+            /* Evita que el usuario seleccione texto o aparezcan menús al dejar presionado */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            /* Elimina el retraso de clic en móviles */
+            touch-action: manipulation;
         }
         .screen { display: none; }
         .active { display: block; }
@@ -40,59 +45,67 @@
             background: var(--card-bg);
             border: 2px solid #333;
             color: white;
-            padding: 12px;
+            padding: 15px;
             border-radius: 12px;
             width: 100%;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 15px;
-            font-size: 15px;
+            font-size: 16px;
             cursor: pointer;
+            touch-action: manipulation;
         }
         .btn-pay:active { background: #222; border-color: var(--button-color); }
         .crypto-icon { width: 24px; height: 24px; border-radius: 50%; }
         
-        .controls { display: flex; align-items: center; gap: 12px; }
+        .controls { display: flex; align-items: center; gap: 15px; }
+        
+        /* Botones más grandes para dedos */
         .btn-circle { 
-            width: 34px; height: 34px; border-radius: 50%; border: none; 
+            width: 40px; height: 40px; border-radius: 50%; border: none; 
             background: var(--button-color); color: white; 
-            cursor: pointer; font-weight: bold; font-size: 18px;
+            cursor: pointer; font-weight: bold; font-size: 20px;
             display: flex; align-items: center; justify-content: center;
+            /* Importante para móvil */
+            touch-action: manipulation;
         }
-        .count-text { font-weight: bold; min-width: 15px; text-align: center; font-size: 16px; }
+        .count-text { font-weight: bold; min-width: 20px; text-align: center; font-size: 18px; }
     </style>
 </head>
 <body>
 
     <div id="screen-catalog" class="screen active">
-        <h2>Servicios</h2>
-        <div id="catalog-list">
-            </div>
+        <h2 id="main-title">Servicios</h2>
+        <div id="catalog-list"></div>
     </div>
 
     <div id="screen-payment" class="screen">
         <h2>Pagar con</h2>
-        <button class="btn-pay" onclick="elegirMoneda('usdc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"> USDC</button>
-        <button class="btn-pay" onclick="elegirMoneda('eth')"><img class="crypto-icon" src="https://cryptologos.cc/logos/ethereum-eth-logo.png"> Ethereum (ETH)</button>
-        <button class="btn-pay" onclick="elegirMoneda('btc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"> Bitcoin (BTC)</button>
-        <button class="btn-pay" onclick="elegirMoneda('sol')"><img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana (SOL)</button>
-        <button class="btn-pay" onclick="elegirMoneda('ltc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/litecoin-ltc-logo.png"> Litecoin (LTC)</button>
-        <button class="btn-pay" onclick="elegirMoneda('trx')"><img class="crypto-icon" src="https://cryptologos.cc/logos/tron-trx-logo.png"> TRON (TRX)</button>
-        <button class="btn-pay" onclick="elegirMoneda('ton')"><img class="crypto-icon" src="https://cryptologos.cc/logos/toncoin-ton-logo.png"> TON</button>
-        <p style="text-align: center; color: var(--hint-color); cursor: pointer; margin-top:20px;" onclick="navegar('screen-catalog')">← Volver</p>
+        <div id="payment-buttons">
+            <button class="btn-pay" onclick="elegirMoneda('usdc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"> USDC</button>
+            <button class="btn-pay" onclick="elegirMoneda('eth')"><img class="crypto-icon" src="https://cryptologos.cc/logos/ethereum-eth-logo.png"> Ethereum (ETH)</button>
+            <button class="btn-pay" onclick="elegirMoneda('btc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/bitcoin-btc-logo.png"> Bitcoin (BTC)</button>
+            <button class="btn-pay" onclick="elegirMoneda('sol')"><img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana (SOL)</button>
+            <button class="btn-pay" onclick="elegirMoneda('ltc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/litecoin-ltc-logo.png"> Litecoin (LTC)</button>
+            <button class="btn-pay" onclick="elegirMoneda('trx')"><img class="crypto-icon" src="https://cryptologos.cc/logos/tron-trx-logo.png"> TRON (TRX)</button>
+            <button class="btn-pay" onclick="elegirMoneda('ton')"><img class="crypto-icon" src="https://cryptologos.cc/logos/toncoin-ton-logo.png"> TON</button>
+        </div>
+        <p style="text-align: center; color: var(--hint-color); padding: 10px;" onclick="navegar('screen-catalog')">← Volver</p>
     </div>
 
     <div id="screen-confirm" class="screen">
         <h2>Confirmar</h2>
         <div class="card" id="resumen-final" style="display: block;"></div>
         <button class="btn-pay" style="background: var(--button-color); justify-content: center; border:none;" onclick="procesarPedidoFinal()">CONFIRMAR PEDIDO</button>
-        <p style="text-align: center; color: var(--hint-color); cursor: pointer;" onclick="navegar('screen-payment')">← Cambiar moneda</p>
+        <p style="text-align: center; color: var(--hint-color); padding: 10px;" onclick="navegar('screen-payment')">← Cambiar moneda</p>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        // Avisar a Telegram que la app está lista para evitar parpadeos
+        tg.ready();
 
         const servicios = [
             { id: 1, nombre: "Servicio 1", precio: 10 },
@@ -101,10 +114,9 @@
             { id: 4, nombre: "Servicio 4", precio: 40 }
         ];
 
-        let carrito = { 1:0, 2:0, 3:0, 4:0 }; // Estado inicial limpio
+        let carrito = { 1:0, 2:0, 3:0, 4:0 };
         let monedaSeleccionada = '';
 
-        // Carga inicial del catálogo (solo una vez para evitar errores de render)
         function initCatalog() {
             const container = document.getElementById('catalog-list');
             container.innerHTML = servicios.map(s => `
@@ -124,18 +136,23 @@
             if (newVal < 0) newVal = 0;
             carrito[id] = newVal;
             
-            // Actualizar solo el número en pantalla
-            document.getElementById(`qty-${id}`).innerText = newVal;
+            // Actualización directa del DOM (la más rápida para móvil)
+            const el = document.getElementById(`qty-${id}`);
+            if(el) el.innerText = newVal;
             
             recalcularTotal();
-            tg.HapticFeedback.impactOccurred('light');
+            
+            // Feedback vibratorio (muy importante en móvil para saber que pulsaste)
+            if(change > 0) tg.HapticFeedback.impactOccurred('light');
+            else tg.HapticFeedback.selectionChanged();
         }
 
         function recalcularTotal() {
             let total = 0;
-            servicios.forEach(s => {
-                total += s.precio * carrito[s.id];
-            });
+            for (let id in carrito) {
+                const s = servicios.find(srv => srv.id == id);
+                total += s.precio * carrito[id];
+            }
 
             if (total > 0) {
                 tg.MainButton.setText(`CONTINUAR ($${total.toFixed(2)})`);
@@ -148,10 +165,11 @@
         function navegar(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
-            
+            window.scrollTo(0,0); // Asegura que empiece arriba
+
             if(screenId === 'screen-catalog') {
                 tg.BackButton.hide();
-                recalcularTotal(); // Asegura que el botón se muestre si hay algo
+                recalcularTotal();
             } else {
                 tg.BackButton.show();
                 tg.MainButton.hide();
@@ -180,7 +198,7 @@
             document.getElementById('resumen-final').innerHTML = `
                 <strong>Pedido:</strong><br>${detalle}<br>
                 <strong>Total:</strong> $${totalFinal.toFixed(2)}<br>
-                <strong>Pago en:</strong> ${moneda.toUpperCase()}
+                <strong>Moneda:</strong> ${moneda.toUpperCase()}
             `;
             navegar('screen-confirm');
         }
@@ -197,7 +215,7 @@
                 }
             });
 
-            fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
+            fetch('TU_WEBHOOK_PRODUCCION_N8N', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -208,8 +226,8 @@
                 })
             }).then(() => {
                 tg.MainButton.hideProgress();
-                tg.showAlert("✅ ¡Confirmado! Revisa el chat para pagar.");
-                setTimeout(() => tg.close(), 2000);
+                tg.showAlert("✅ Pedido enviado. Revisa tu chat.");
+                setTimeout(() => tg.close(), 1500);
             }).catch(() => {
                 tg.MainButton.hideProgress();
                 tg.showAlert("Error de conexión.");
