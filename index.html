@@ -146,32 +146,41 @@
         }
 
         function finalizarPago(moneda) {
-            tg.MainButton.showProgress();
-            
-            let totalMonto = 0;
-            Object.keys(carrito).forEach(id => {
-                totalMonto += servicios.find(s => s.id == id).precio * carrito[id];
-            });
+    tg.MainButton.showProgress();
+    
+    let totalMonto = 0;
+    let serviciosSeleccionados = []; // Nueva lista para los nombres
 
-            fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    user: tg.initDataUnsafe.user,
-                    total: totalMonto,
-                    currency: moneda // Enviamos la moneda elegida
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                tg.MainButton.hideProgress();
-                if(data.payment_url) tg.openLink(data.payment_url);
-            });
-        }
+    Object.keys(carrito).forEach(id => {
+        const servicioEncontrado = servicios.find(s => s.id == id);
+        const cantidad = carrito[id];
+        totalMonto += servicioEncontrado.precio * cantidad;
+        
+        // Guardamos el nombre y la cantidad
+        serviciosSeleccionados.push(`${cantidad}x ${servicioEncontrado.nombre}`);
+    });
+
+    fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            user: tg.initDataUnsafe.user,
+            total: totalMonto,
+            currency: moneda,
+            servicios_nombres: serviciosSeleccionados.join(', ') // "2x Servicio 1, 1x Servicio 3"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        tg.MainButton.hideProgress();
+        if(data.payment_url) tg.openLink(data.payment_url);
+    });
+}
 
         renderCatalog();
     </script>
 </body>
 </html>
+
 
 
