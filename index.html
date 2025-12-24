@@ -21,7 +21,6 @@
         .screen { display: none; }
         .active { display: block; }
         h2 { text-align: center; color: var(--button-color); }
-        
         .card {
             background: var(--card-bg);
             border-radius: 12px;
@@ -34,7 +33,6 @@
         }
         .info h3 { margin: 0; font-size: 16px; }
         .price { color: var(--button-color); font-weight: bold; }
-        
         .btn-pay {
             background: var(--card-bg);
             border: 2px solid #333;
@@ -48,16 +46,11 @@
             gap: 15px;
             font-size: 15px;
             cursor: pointer;
-            transition: 0.2s;
         }
-        .btn-pay:active { border-color: var(--button-color); background: #222; }
-        .crypto-icon { width: 22px; height: 22px; border-radius: 50%; }
-        
+        .btn-pay:active { border-color: var(--button-color); }
+        .crypto-icon { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; }
         .controls { display: flex; align-items: center; gap: 10px; }
         .btn-circle { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--button-color); color: white; cursor: pointer; font-weight: bold; }
-        
-        #resumen-final hr { border: 0; border-top: 1px solid #333; margin: 10px 0; }
-        .grid-pay { display: grid; grid-template-columns: 1fr; gap: 5px; }
     </style>
 </head>
 <body>
@@ -76,18 +69,15 @@
             <button class="btn-pay" onclick="elegirMoneda('sol')"><img class="crypto-icon" src="https://cryptologos.cc/logos/solana-sol-logo.png"> Solana (SOL)</button>
             <button class="btn-pay" onclick="elegirMoneda('ltc')"><img class="crypto-icon" src="https://cryptologos.cc/logos/litecoin-ltc-logo.png"> Litecoin (LTC)</button>
             <button class="btn-pay" onclick="elegirMoneda('trx')"><img class="crypto-icon" src="https://cryptologos.cc/logos/tron-trx-logo.png"> TRON (TRX)</button>
-            <button class="btn-pay" onclick="elegirMoneda('bnb')"><img class="crypto-icon" src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png"> BNB (BSC)</button>
-            <button class="btn-pay" onclick="elegirMoneda('ton')"><img class="crypto-icon" src="https://ton.org/download/ton_symbol.png"> TON (Toncoin)</button>
+            <button class="btn-pay" onclick="elegirMoneda('ton')"><img class="crypto-icon" src="https://cryptologos.cc/logos/toncoin-ton-logo.png"> TON (Toncoin)</button>
         </div>
-        <p style="text-align: center; color: var(--hint-color); cursor: pointer; margin-top: 20px;" onclick="irACatalogo()">← Volver al catálogo</p>
+        <p style="text-align: center; color: var(--hint-color); cursor: pointer;" onclick="irACatalogo()">← Volver</p>
     </div>
 
     <div id="screen-confirm" class="screen">
-        <h2>Confirmar Pedido</h2>
-        <div class="card" id="resumen-final" style="display: block; text-align: left;"></div>
-        <button class="btn-pay" style="background: var(--button-color); justify-content: center; border:none; margin-top: 10px;" onclick="procesarPedidoFinal()">
-            CONFIRMAR Y RECIBIR DIRECCIÓN
-        </button>
+        <h2>Confirmar</h2>
+        <div class="card" id="resumen-final" style="display: block;"></div>
+        <button class="btn-pay" style="background: var(--button-color); justify-content: center; border:none;" onclick="procesarPedidoFinal()">CONFIRMAR</button>
         <p style="text-align: center; color: var(--hint-color); cursor: pointer;" onclick="irAPayments()">← Cambiar moneda</p>
     </div>
 
@@ -109,13 +99,10 @@
             const container = document.getElementById('catalog-list');
             container.innerHTML = servicios.map(s => `
                 <div class="card">
-                    <div class="info">
-                        <h3>${s.nombre}</h3>
-                        <span class="price">$${s.precio}</span>
-                    </div>
+                    <div class="info"><h3>${s.nombre}</h3><span class="price">$${s.precio}</span></div>
                     <div class="controls">
                         <button class="btn-circle" onclick="cambiarCantidad(${s.id}, -1)">-</button>
-                        <span>${carrito[s.id] || 0}</span>
+                        <span id="qty-${s.id}">${carrito[s.id] || 0}</span>
                         <button class="btn-circle" onclick="cambiarCantidad(${s.id}, 1)">+</button>
                     </div>
                 </div>
@@ -126,6 +113,9 @@
             carrito[id] = (carrito[id] || 0) + delta;
             if (carrito[id] <= 0) delete carrito[id];
             
+            // Actualizar número visualmente sin re-renderizar todo
+            document.getElementById(`qty-${id}`).innerText = carrito[id] || 0;
+
             let total = 0;
             Object.keys(carrito).forEach(key => {
                 total += servicios.find(s => s.id == key).precio * carrito[key];
@@ -138,7 +128,6 @@
                 tg.MainButton.hide();
             }
             tg.HapticFeedback.selectionChanged();
-            renderCatalog();
         }
 
         tg.onEvent('mainButtonClicked', () => {
@@ -155,7 +144,11 @@
             document.getElementById('screen-confirm').classList.remove('active');
             document.getElementById('screen-catalog').classList.add('active');
             tg.BackButton.hide();
-            tg.MainButton.show();
+            
+            // Re-evaluar si mostrar botón principal
+            let total = 0;
+            Object.keys(carrito).forEach(key => total += servicios.find(s => s.id == key).precio * carrito[key]);
+            if(total > 0) tg.MainButton.show();
         }
 
         function elegirMoneda(moneda) {
@@ -172,10 +165,9 @@
             });
 
             document.getElementById('resumen-final').innerHTML = `
-                <strong>Servicios:</strong><br>${detalle}
-                <hr>
-                <strong>Total a pagar:</strong> $${totalFinal.toFixed(2)}<br>
-                <strong>Moneda elegida:</strong> ${moneda.toUpperCase()}
+                <strong>Pedido:</strong><br>${detalle}<br>
+                <strong>Total:</strong> $${totalFinal.toFixed(2)}<br>
+                <strong>Pago en:</strong> ${moneda.toUpperCase()}
             `;
         }
 
@@ -206,11 +198,11 @@
                 })
             }).then(() => {
                 tg.MainButton.hideProgress();
-                tg.showAlert("✅ ¡Pedido confirmado! Revisa tu chat, te hemos enviado la dirección de pago.");
+                tg.showAlert("✅ ¡Confirmado! Revisa el chat para la dirección.");
                 setTimeout(() => tg.close(), 2000);
             }).catch(() => {
                 tg.MainButton.hideProgress();
-                tg.showAlert("Error al procesar el pedido.");
+                tg.showAlert("Error.");
             });
         }
 
