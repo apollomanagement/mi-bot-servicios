@@ -5,61 +5,143 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            background-color: var(--tg-theme-secondary-bg-color);
-            color: var(--tg-theme-text-color);
-            font-family: sans-serif;
-            margin: 0; padding: 20px;
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --text-color: #ffffff;
+            --hint-color: #aaaaaa;
+            --button-color: #248bcf;
         }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 15px;
+        }
+        h2 { text-align: center; color: var(--button-color); }
+        .service-list { margin-bottom: 100px; }
         .card {
-            background: var(--tg-theme-bg-color);
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: 15px;
             padding: 15px;
             margin-bottom: 15px;
-            text-align: center;
-            border: 1px solid var(--tg-theme-hint-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #333;
         }
-        button {
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
-            border: none;
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
+        .info h3 { margin: 0; font-size: 16px; }
+        .info p { margin: 5px 0 0; color: var(--hint-color); font-size: 14px; }
+        .price { font-weight: bold; color: var(--button-color); }
+        .btn-add {
+            background: var(--button-color);
+            color: white; border: none;
+            padding: 8px 15px; border-radius: 8px; font-weight: bold;
+        }
+        /* Estilos del Carrito Flotante (Botón Principal de Telegram) */
+        .footer-cart {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--card-bg); padding: 20px;
+            border-top: 1px solid #333; display: none;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Servicio Premium</h2>
-        <p>Precio: 50 USD (vía Crypto)</p>
-        <button id="buy-btn">PAGAR AHORA</button>
+
+    <h2>Nuestros Servicios</h2>
+
+    <div class="service-list">
+        <div class="card">
+            <div class="info">
+                <h3>Servicio 1</h3>
+                <p>Descripción breve</p>
+                <span class="price">$10.00</span>
+            </div>
+            <button class="btn-add" onclick="agregarAlCarrito('Servicio 1', 10)">Añadir</button>
+        </div>
+
+        <div class="card">
+            <div class="info">
+                <h3>Servicio 2</h3>
+                <p>Descripción breve</p>
+                <span class="price">$20.00</span>
+            </div>
+            <button class="btn-add" onclick="agregarAlCarrito('Servicio 2', 20)">Añadir</button>
+        </div>
+
+        <div class="card">
+            <div class="info">
+                <h3>Servicio 3</h3>
+                <p>Descripción breve</p>
+                <span class="price">$30.00</span>
+            </div>
+            <button class="btn-add" onclick="agregarAlCarrito('Servicio 3', 30)">Añadir</button>
+        </div>
+
+        <div class="card">
+            <div class="info">
+                <h3>Servicio 4</h3>
+                <p>Descripción breve</p>
+                <span class="price">$40.00</span>
+            </div>
+            <button class="btn-add" onclick="agregarAlCarrito('Servicio 4', 40)">Añadir</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.MainButton.setText("VER CARRITO Y PAGAR");
+        tg.MainButton.textColor = "#FFFFFF";
+        tg.MainButton.color = "#248bcf";
 
-        document.getElementById('buy-btn').addEventListener('click', () => {
-            // Enviamos la orden a n8n para que genere el link de pago
+        let carrito = [];
+        let total = 0;
+
+        function agregarAlCarrito(nombre, precio) {
+            carrito.push({nombre, precio});
+            total += precio;
+            
+            tg.MainButton.show();
+            tg.MainButton.setText(`PAGAR TOTAL: $${total.toFixed(2)}`);
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        // Al presionar el botón principal de Telegram
+        tg.onEvent('mainButtonClicked', function(){
+            if (total > 0) {
+                pagarConNowPayments();
+            }
+        });
+
+        function pagarConNowPayments() {
+            tg.MainButton.showProgress(); // Muestra carga
+
             fetch('https://n8n.srv1211656.hstgr.cloud/webhook/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    user_id: tg.initDataUnsafe.user.id,
-                    amount: 50,
-                    order_id: "PEDIDO-" + Date.now()
+                    user_id: tg.initDataUnsafe.user?.id,
+                    username: tg.initDataUnsafe.user?.username,
+                    servicios: carrito,
+                    monto_total: total,
+                    order_id: "ORDER-" + Math.random().toString(36).substr(2, 9)
                 })
-            }).then(response => response.json())
-              .then(data => {
-                  if(data.payment_url) {
-                      tg.openLink(data.payment_url); // Abre NOWPayments
-                  }
-              });
-        });
+            })
+            .then(res => res.json())
+            .then(data => {
+                tg.MainButton.hideProgress();
+                if(data.payment_url) {
+                    tg.openLink(data.payment_url); // Abre NOWPayments
+                } else {
+                    tg.showAlert("Error al generar el link de pago.");
+                }
+            })
+            .catch(() => {
+                tg.MainButton.hideProgress();
+                tg.showAlert("Error de conexión con el servidor.");
+            });
+        }
     </script>
 </body>
 </html>
-
