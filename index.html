@@ -149,17 +149,20 @@
     tg.MainButton.showProgress();
     
     let totalMonto = 0;
-    let serviciosSeleccionados = []; // Nueva lista para los nombres
+    let serviciosSeleccionados = []; // 1. Inicializamos la lista vacía
 
+    // 2. Llenamos la lista RECORRIENDO el carrito actual
     Object.keys(carrito).forEach(id => {
-        const servicioEncontrado = servicios.find(s => s.id == id);
-        const cantidad = carrito[id];
-        totalMonto += servicioEncontrado.precio * cantidad;
-        
-        // Guardamos el nombre y la cantidad
-        serviciosSeleccionados.push(`${cantidad}x ${servicioEncontrado.nombre}`);
+        const srv = servicios.find(s => s.id == parseInt(id));
+        if (srv) {
+            const cantidad = carrito[id];
+            totalMonto += srv.precio * cantidad;
+            // Guardamos el texto: ej. "2x Servicio 1"
+            serviciosSeleccionados.push(`${cantidad}x ${srv.nombre}`); 
+        }
     });
 
+    // 3. Enviamos a n8n
     fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -167,13 +170,17 @@
             user: tg.initDataUnsafe.user,
             total: totalMonto,
             currency: moneda,
-            servicios_nombres: serviciosSeleccionados.join(', ') // "2x Servicio 1, 1x Servicio 3"
+            servicios_nombres: serviciosSeleccionados.join(', ') // 4. Aquí se unen los nombres
         })
     })
     .then(res => res.json())
     .then(data => {
         tg.MainButton.hideProgress();
         if(data.payment_url) tg.openLink(data.payment_url);
+    })
+    .catch(err => {
+        tg.MainButton.hideProgress();
+        tg.showAlert("Error al conectar con el servidor");
     });
 }
 
@@ -181,6 +188,7 @@
     </script>
 </body>
 </html>
+
 
 
 
