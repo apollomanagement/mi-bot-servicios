@@ -153,7 +153,7 @@
                 totalMonto += servicios.find(s => s.id == id).precio * carrito[id];
             });
 
-            fetch('https://n8n.srv1211656.hstgr.cloud/webhook/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
+            fetch('https://n8n.srv1211656.hstgr.cloud/webhook-test/c1ccc323-55d3-4ae7-bc93-800ab6d07cf7', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -173,3 +173,4 @@
     </script>
 </body>
 </html>
+
